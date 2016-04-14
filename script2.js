@@ -1,4 +1,4 @@
-var Game = function(board, player, depth){
+var Game = function(board, player, depth, lastMove){
     //board: a 2d array of representing the game state
     //player: whose turn is it? ('x' or 'o')
     //1 = computer, 0 = human
@@ -7,6 +7,7 @@ var Game = function(board, player, depth){
     this.board = board;
     this.player = player;
     this.depth = depth;
+    this.lastMove = lastMove;
 
 
     this.win = function(){
@@ -91,12 +92,14 @@ var Game = function(board, player, depth){
 
         if (this.win()){
             if(this.player){
-                return 10 - depth;
-            } else {
+                //the current player is 1, meaning 0 wins
                 return -10;
+            } else {
+                //the current player is 0, meaing 1 wins
+                return 10;
             }
         } else {
-            return depth - 0;
+            return 0;
         }
     }
 
@@ -107,13 +110,16 @@ var Game = function(board, player, depth){
             //player is flipped
             //depth is incremented by 1
 
-        var newBoard = this.board;
+        //shallow copy the board!
+        var newBoard = this.board.map(function(arr) {
+            return arr.slice();
+        })
         newBoard[move[0]][move[1]] = this.player;
 
         var turn = Number(!this.player);
 
         var depth = this.depth + 1;
-        return new Game(newBoard, turn, depth )
+        return new Game(newBoard, turn, depth, move)
     }
 
     this.getPossibleMoves = function() {
@@ -136,56 +142,77 @@ var Game = function(board, player, depth){
         //returns the object structured as {bestScore: move}
 
         if(this.score() != 0){
-            return this.score();
+
+            outcome = new Object;
+            outcome[this.score()] = this.lastMove;
+            return outcome;
         } else {
             //recursion!
             var outcomes = [];
             var possibleMoves = this.getPossibleMoves();
             for (var m=0; m<possibleMoves.length; m++){
-                var move = possibleMoves[m];
-                newGame = this.step(move);
-                score = newGame.minimax();
-
-                outcomes.push({score: move})
-            }
-            
-            //look at all of the outcomes, 
-            //decide which is the best and return
-            
-            var bestScore = -(11 * this.player); //lower than lowest possible
-            var bestOutcome = null;
-
-            var betterScore = function(score) {
-                //returns if the given score is better than bestScore
-                //based on whose turn it is
-
-                if (this.player == 1 ){
-                    return score > bestScore
-                } else {
-                    return score < bestScore
+                    var move = possibleMoves[m];
+                    newGame = this.step(move);
+                    outcome = newGame.minimax();
+                    outcomes.push(outcome);
                 }
-            }
+        }
+
+        var pickOutcome = function(outcomes) {
 
             for (o in outcomes){
                 var outcome = outcomes[o];
-                var outcomeScore = outcome.keys()[0] 
+                var outcomeScore = Object.keys(outcome)[0] 
                 if ( betterScore( outcomeScore )){
                     bestScore  = outcomeScore;
                     bestOutcome = outcome
                 }
-            }
 
+            }
             return bestOutcome;
         }
+
+        var betterScore = function(outcomeScore){
+            //player 1 wants the highest score
+            //player 2 wants the lowest score
+
+            if (player == 1){
+                return outcomeScore > bestScore;
+            } else {
+                return outcomeScore < bestScore;
+            }
+        }
+
+        var bestScore = -(11 * this.player); //lower than lowest possible
+
+        return pickOutcome(outcomes);
+
     }
 
-};
+    this.minimaxBoot = function() {
+        //bootstraps the minimax function
+        //returns the best possible move.
+
+        var outcomes = this.minimax();
+        return outcomes;
+    }
+            
+    //     //look at all of the outcomes, 
+    //     //decide which is the best and return
+            
+
+    //     }
+    // }
+
+}
 
 var board = [
-    [0,     null,   1],
-    [1,     null,   null],
-    [1,     0,      0]
-]
+    [null,  1,   1],
+    [null,  0,   0],
+    [0,  1,   0]
+];
 
-game = new Game(board, 1, 0)
-game.minimax()
+game = new Game(board, 1, 0);
+
+move = game.minimaxBoot();
+console.log(move);
