@@ -1,13 +1,17 @@
-var Game = function(board, player, depth, lastMove){
+var Game = function(board, player, depth, lastMove, playerLtr){
     //board: a 2d array of representing the game state
-    //player: whose turn is it? ('x' or 'o')
-    //1 = computer, 0 = human
+    //player: whose turn is it? (player or computer)
+        //1 = computer, 0 = human
     //depth: how many turns have occured? Start counting with 0
+    //lastMove: the last move that was made
+    //playerLtr: which letter the computer is playing as. 
+
 
     this.board = board;
     this.player = player;
     this.depth = depth;
     this.lastMove = lastMove;
+    this.playerLtr = playerLtr;
 
 
     this.win = function(){
@@ -193,38 +197,103 @@ var Game = function(board, player, depth, lastMove){
         //bootstraps the minimax function
         //returns the best possible move.
 
-        var outcomes = this.minimax();
-        return outcomes;
+        var bestMove = this.minimax();
+        return bestMove;
     }
-            
-    //     //look at all of the outcomes, 
-    //     //decide which is the best and return
-            
 
-    //     }
-    // }
+    this.move = function(mv) {
+        //player's move is added to the board
+        //mv: array of x,y coords
+
+        this.board[mv[0], mv[1]] = this.player;
+    }
+
+
+    this.popPage = function() {
+        //page is populated with board.
+
+        if (this.playerLtr == 'x'){
+            var coordPrintable = { '0':'x' , '1': 'o' };
+        } else {
+            var coordPrintable = { '1': 'x', '0': 'o' };
+        }
+
+        var pageRows = $(".ttt-row");
+        for (var r=0; r<this.board.length; r++){
+            var pageRow = pageRows[r];
+            var cells = $(pageRow).find(".table-cell");
+            for (c=0; c<this.board[r].length; c++){
+                //populate the page cell with the right value
+                var boardValue = this.board[r][c];
+                var cell = cells[c]
+                $(cell).text(coordPrintable[boardValue])
+                // .text(coordPrintable[boardValue]);
+            }
+        }
+    }
 
 }
 
-// var board = [
-//     [null,  1,   1],
-//     [null,  0,   0],
-//     [0,  1,   0]
-// ];
+var gameLoop = function(playerInput){
+    //the main loop for the game
+    //playerInput: the player's choice of Xs or Os
+    //and if they will go first or second
 
-// game = new Game(board, 1, 0);
+    var board = [
+        [null,  null,   null],
+        [null,  null, null],
+        [null, null, null]
+    ]    
 
-// move = game.minimaxBoot();
-// console.log(move);
-// console.log(game.board);
+    var game = new Game(board, playerInput["compFirst"], 0, [null, null], playerInput["xOrO"])
+
+    // if its the player's turn
+    //     listen for a click
+
+    if (game.player) {
+        //its the computer's turn
+        // run minimax to determine computer's move
+    } else {
+        //its the player's turn
+    }
+
+
+    // make a new game based on the input
+}
+
+
+// $(document).ready(function(){
+//     console.log("doc ready!")
+//     $('#setupModal').modal('show');
+
+//     $("#submitBtn").click(function(event) {
+//         var dataArr = $("#gameSetupForm").serializeArray();
+
+
+//         //prep user input
+//         var data = {}        
+//         for (i in dataArr){
+//             var obj = dataArr[i];
+//             data[obj["name"]] = obj["value"];
+//         }
+
+//         var emptyBoard = [
+//             [null, null, null],
+//             [null, null, null],
+//             [null, null, null]
+//         ];
+
+//         console.log(data);
+//         gameLoop(playerInput);
+
+//     });
+
+// })
 
 $(document).ready(function(){
-    console.log("doc ready!")
-    $('#setupModal').modal('show');
-
-    $("#submitBtn").click(function(event) {
-        var data = $("#gameSetupForm").serializeArray();
-        console.log(JSON.stringify(data));
-    });
-
+    $("body").click(function(event) {
+        console.log(event.target)
+        //row is Math.floor(c/3)
+        //column is c%3
+    })
 })
