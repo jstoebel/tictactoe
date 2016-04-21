@@ -13,6 +13,9 @@ var Game = function(board, player, depth, lastMove, playerLtr){
     this.lastMove = lastMove;
     this.playerLtr = playerLtr;
 
+    //set the player turn in the screen
+
+    $("#whosTurn").text("Player turn: "+ this.playerLtr);
 
     this.win = function(){
         //determines if the game is in a winning state
@@ -234,6 +237,28 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
 }
 
+var clickBoard = function(event) {
+
+    return new Promise(function(resolve, reject){
+
+        try {
+            var cellNum = event.target.id;
+            var re = /cell(\d)/;
+            var match = cellNum.match(/\d/)[0];
+            resolve(match);
+            
+        } catch (e) {
+            reject();
+        }
+
+        //row is Math.floor(c/3)
+        //column is c%3
+
+    })
+}
+
+
+
 var gameLoop = function(playerInput){
     //the main loop for the game
     //playerInput: the player's choice of Xs or Os
@@ -247,53 +272,70 @@ var gameLoop = function(playerInput){
 
     var game = new Game(board, playerInput["compFirst"], 0, [null, null], playerInput["xOrO"])
 
-    // if its the player's turn
-    //     listen for a click
+    //if its the player's turn
+        //listen for a click
 
     if (game.player) {
         //its the computer's turn
         // run minimax to determine computer's move
     } else {
         //its the player's turn
+
+        $("body").click(function(event) {
+            var cellNum = event.target.id;
+            var re = /cell(\d)/;
+            var match = cellNum.match(/\d/)[0];
+            console.log(match[0])
+
+            //row is Math.floor(c/3)
+            //column is c%3
+        })        
     }
 
-
-    // make a new game based on the input
+    //make a new game based on the input
 }
 
 
-// $(document).ready(function(){
-//     console.log("doc ready!")
-//     $('#setupModal').modal('show');
+$(document).ready(function(){
+    console.log("doc ready!")
+    $('#setupModal').modal('show');
 
-//     $("#submitBtn").click(function(event) {
-//         var dataArr = $("#gameSetupForm").serializeArray();
+    $("#submitBtn").click(function(event) {
 
 
-//         //prep user input
-//         var data = {}        
-//         for (i in dataArr){
-//             var obj = dataArr[i];
-//             data[obj["name"]] = obj["value"];
-//         }
+        //here is where the game loop begins
 
-//         var emptyBoard = [
-//             [null, null, null],
-//             [null, null, null],
-//             [null, null, null]
-//         ];
+        //make a new game
 
-//         console.log(data);
-//         gameLoop(playerInput);
+        //while there isn't a winner:
+            //decide who's turn it is...
+            //run the right logic to get the new move
+            //if input was given...
+                //make a new game
+                //repeat the loop
 
-//     });
+        var dataArr = $("#gameSetupForm").serializeArray();
 
-// })
+
+        //prep user input
+        var data = {}        
+        for (i in dataArr){
+            var obj = dataArr[i];
+            data[obj["name"]] = obj["value"];
+        }
+
+        var emptyBoard = [
+            [null, null, null],
+            [null, null, null],
+            [null, null, null]
+        ];
+
+        console.log(data);
+        gameLoop(data);
+    });
+
+})
 
 $(document).ready(function(){
-    $("body").click(function(event) {
-        console.log(event.target)
-        //row is Math.floor(c/3)
-        //column is c%3
-    })
+
 })
