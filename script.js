@@ -116,6 +116,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //returns a new game with move applied
             //player is flipped
             //depth is incremented by 1
+        //NOTE: THIS FUNCTION IS TO BE USED WITH MINIMAX. DON'T USE IT TO SWAP PLAYERS IN THE ACTUAL GAME.
 
         //shallow copy the board!
         var newBoard = this.board.map(function(arr) {
@@ -196,19 +197,41 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
     }
 
-    this.minimaxBoot = function() {
+    this.compGo = function() {
         //bootstraps the minimax function
         //returns the best possible move.
 
-        var bestMove = this.minimax();
-        return bestMove;
+        var moveChoice = this.minimax();
+        this.move(moveChoice);
+        //call player to go if game isn't over.
+
+        console.log("handing off to player")
+        this.playerGo();
+    }
+
+    this.playerGo = function() {
+        //listen for click
+        $("body").click(clickBoard(event).then(
+            function(match){
+                var row = Math.floor(match / 3);
+                var column = match % 3;
+                var moveChoice = [row, column];
+                this.move((moveChoice));
+                console.log("handing off to computer!")
+                this.compGo()
+            })
+        )
     }
 
     this.move = function(mv) {
-        //player's move is added to the board
-        //mv: array of x,y coords
+        //player's move is added to the board 
+        //and player is swapped
+        //mv: array of x,y coords, assume they are null.
+        //NOTE: this is the method to use for moving in actual game play.
 
         this.board[mv[0], mv[1]] = this.player;
+        this.player = Number(!this.player);
+        this.popPage();
     }
 
 
@@ -242,57 +265,24 @@ var clickBoard = function(event) {
     return new Promise(function(resolve, reject){
 
         try {
+
+            //make sure player isn't cheating and trying to click on an occupied spot!
+            if (!event.target.text() === null ) {
+                throw TypeError;
+            }
+ 
             var cellNum = event.target.id;
-            var re = /cell(\d)/;
+            // var re = /cell(\d)/;
             var match = cellNum.match(/\d/)[0];
+            // var row = Math.floor(match / 3);
+            // var column = match % 3;
             resolve(match);
             
         } catch (e) {
             reject();
         }
 
-        //row is Math.floor(c/3)
-        //column is c%3
-
     })
-}
-
-
-
-var gameLoop = function(playerInput){
-    //the main loop for the game
-    //playerInput: the player's choice of Xs or Os
-    //and if they will go first or second
-
-    var board = [
-        [null,  null,   null],
-        [null,  null, null],
-        [null, null, null]
-    ]    
-
-    var game = new Game(board, playerInput["compFirst"], 0, [null, null], playerInput["xOrO"])
-
-    //if its the player's turn
-        //listen for a click
-
-    if (game.player) {
-        //its the computer's turn
-        // run minimax to determine computer's move
-    } else {
-        //its the player's turn
-
-        $("body").click(function(event) {
-            var cellNum = event.target.id;
-            var re = /cell(\d)/;
-            var match = cellNum.match(/\d/)[0];
-            console.log(match[0])
-
-            //row is Math.floor(c/3)
-            //column is c%3
-        })        
-    }
-
-    //make a new game based on the input
 }
 
 
@@ -302,20 +292,7 @@ $(document).ready(function(){
 
     $("#submitBtn").click(function(event) {
 
-
-        //here is where the game loop begins
-
-        //make a new game
-
-        //while there isn't a winner:
-            //decide who's turn it is...
-            //run the right logic to get the new move
-            //if input was given...
-                //make a new game
-                //repeat the loop
-
         var dataArr = $("#gameSetupForm").serializeArray();
-
 
         //prep user input
         var data = {}        
@@ -330,12 +307,17 @@ $(document).ready(function(){
             [null, null, null]
         ];
 
-        console.log(data);
-        gameLoop(data);
+        var game = new Game(emptyBoard, data["compFirst"], 0, [null, null], data["xOrO"])
+        //here is where the game loop begins
+
+        console.log("LET'S START THE GAME!")
+
+        if (game.player) {
+            game.compGo()
+        } else {
+            game.playerGo();
+        }
+
     });
-
-})
-
-$(document).ready(function(){
 
 })
