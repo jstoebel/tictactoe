@@ -1,10 +1,12 @@
-var Game = function(board, player, depth, lastMove, playerLtr){
+var Game = function(board, player, depth, lastMove, playerLtr, alpha=null, beta=null){
     //board: a 2d array of representing the game state
     //player: whose turn is it? (player or computer)
         //1 = computer, 0 = human
     //depth: how many turns have occured? Start counting with 0
     //lastMove: the last move that was made
     //playerLtr: which letter the computer is playing as. 
+    //alpha: the best score found so far for human player
+    //beta: the best score found so far for computer player  
 
 
     this.board = board;
@@ -12,6 +14,9 @@ var Game = function(board, player, depth, lastMove, playerLtr){
     this.depth = depth;
     this.lastMove = lastMove;
     this.playerLtr = playerLtr;
+    this.alpha = alpha;
+    this.beta = beta;
+
 
     //set the player turn in the screen
 
@@ -110,6 +115,24 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         }
     }
 
+    this.score2 = function() {
+        //source: http://catarak.github.io/blog/2015/01/07/solving-tic-tac-toe/
+
+        //get's the score for the current game state
+
+        // +100 for each three-in-a-row for the AI
+        // +10 for each two-in-a-row (and empty cell) for the AI
+        // +1 for each one-in-a-row (and two empty cells) for the AI
+        // -1 for each one-in-a-row (and two empty cells) for the other player
+        // -10 for each two-in-a-row (and empty cell) for the other player
+        // -100 for each three-in-a-row for the other player
+        // 0 for all other states
+
+        //is the assumption that a score 
+
+
+    }
+
     this.step = function(move){
         //creates a new game object based on move and returns the result
         //move: a 2d array of coordinates to move
@@ -154,6 +177,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
             outcome = new Object;
             outcome[this.score()] = this.lastMove;
             return outcome;
+            
         } else {
             //recursion!
             var outcomes = [];
@@ -205,22 +229,46 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         this.move(moveChoice);
         //call player to go if game isn't over.
 
-        console.log("handing off to player")
-        this.playerGo();
+        console.log("handing back to turn controller!")
+        this.turnController();
     }
 
     this.playerGo = function() {
         //listen for click
         $("body").click(clickBoard(event).then(
             function(match){
+                // call back for when the player picks a spot
+
                 var row = Math.floor(match / 3);
                 var column = match % 3;
                 var moveChoice = [row, column];
                 this.move((moveChoice));
-                console.log("handing off to computer!")
-                this.compGo()
+                console.log("handing back to turn controller!")
+                this.turnController();
             })
         )
+    }
+
+
+    this.turnController = function() {
+        //determines who's turn is next and prompts their move.
+        //if player is up next, prompt the computer and visa-versa
+        //if the game is over, wrap up
+
+        if (this.win()) {
+            console.log("the game is over")
+            //wrap up the game
+        } else if (this.player) {
+            //its the computer's turn
+            console.log("handing off to computer")
+            this.compGo()
+        } else {
+            console.log("handing off to player")
+            //its the player's turn
+            this.playerGo();
+        }
+
+
     }
 
     this.move = function(mv) {
@@ -286,13 +334,22 @@ var clickBoard = function(event) {
 }
 
 
+
 $(document).ready(function(){
+
+    //pruning: need to do a depth first iteration of the tree. 
+    //If one child yeilds a loss, don't explore its other children
+
     console.log("doc ready!")
     $('#setupModal').modal('show');
 
     $("#submitBtn").click(function(event) {
 
+    $('#setupModal').modal('hide');        
+
         var dataArr = $("#gameSetupForm").serializeArray();
+
+        console.log(dataArr);
 
         //prep user input
         var data = {}        
@@ -302,7 +359,7 @@ $(document).ready(function(){
         }
 
         var emptyBoard = [
-            [null, null, null],
+            [null, 'x', 'o'],
             [null, null, null],
             [null, null, null]
         ];
@@ -312,11 +369,15 @@ $(document).ready(function(){
 
         console.log("LET'S START THE GAME!")
 
-        if (game.player) {
-            game.compGo()
-        } else {
-            game.playerGo();
-        }
+        console.log("testing first move...")
+        var t0 = new Date();
+
+        console.log(game.minimax());
+
+        t1 = new Date();
+        console.log("Time to run... ");
+        console.log(t1-t0);
+        // game.turnController();
 
     });
 
