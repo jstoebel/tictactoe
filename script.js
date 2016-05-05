@@ -1,4 +1,4 @@
-var Game = function(board, player, depth, lastMove, playerLtr, alpha=null, beta=null){
+var Game = function(board, player, depth, lastMove, playerLtr){
     //board: a 2d array of representing the game state
     //player: whose turn is it? (player or computer)
         //1 = computer, 0 = human
@@ -14,8 +14,6 @@ var Game = function(board, player, depth, lastMove, playerLtr, alpha=null, beta=
     this.depth = depth;
     this.lastMove = lastMove;
     this.playerLtr = playerLtr;
-    this.alpha = alpha;
-    this.beta = beta;
 
 
     //set the player turn in the screen
@@ -168,6 +166,31 @@ var Game = function(board, player, depth, lastMove, playerLtr, alpha=null, beta=
     }
 
     this.minimax = function() {
+        //SECOND ATTEMPT
+        //perform a bredth first search of the tree. 
+        //If we hit a desireable outcome, stop! We won't find any better.
+
+        var queue = [];
+
+        queue.push(this)
+
+        while(queue.length > 0){
+
+            var gameState = queue.shift;    // dequeue gameState
+
+            //did I win?
+                //break!
+            //else
+                //get possible moves of this game state
+                //for each possible move
+                    //generate game state
+                    //enqueue game state
+
+        }
+
+    }
+
+    this.minimax = function() {
         //RECURSION HAPPENS HERE
         //recursivly determines all possible outcomes starting from current state
         //returns the object structured as {bestScore: move}
@@ -177,7 +200,7 @@ var Game = function(board, player, depth, lastMove, playerLtr, alpha=null, beta=
             outcome = new Object;
             outcome[this.score()] = this.lastMove;
             return outcome;
-            
+
         } else {
             //recursion!
             var outcomes = [];
