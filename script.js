@@ -1,18 +1,19 @@
-var Game = function(board, player, depth, lastMove, playerLtr){
+var Game = function(board, player, depth, lastMove, parentState, playerLtr){
     //board: a 2d array of representing the game state
     //player: whose turn is it? (player or computer)
         //1 = computer, 0 = human
     //depth: how many turns have occured? Start counting with 0
     //lastMove: the last move that was made
+    //lastState: the gameState prior to the move that created the current game state.
     //playerLtr: which letter the computer is playing as. 
-    //alpha: the best score found so far for human player
-    //beta: the best score found so far for computer player  
+
 
 
     this.board = board;
     this.player = player;
     this.depth = depth;
     this.lastMove = lastMove;
+    this.parentState = parentState;
     this.playerLtr = playerLtr;
 
 
@@ -103,32 +104,14 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         if (this.win()){
             if(this.player){
                 //the current player is 1, meaning 0 wins
-                return -10;
+                return -10 + this.depth;
             } else {
                 //the current player is 0, meaing 1 wins
-                return 10;
+                return 10 - this.depth;
             }
         } else {
             return 0;
         }
-    }
-
-    this.score2 = function() {
-        //source: http://catarak.github.io/blog/2015/01/07/solving-tic-tac-toe/
-
-        //get's the score for the current game state
-
-        // +100 for each three-in-a-row for the AI
-        // +10 for each two-in-a-row (and empty cell) for the AI
-        // +1 for each one-in-a-row (and two empty cells) for the AI
-        // -1 for each one-in-a-row (and two empty cells) for the other player
-        // -10 for each two-in-a-row (and empty cell) for the other player
-        // -100 for each three-in-a-row for the other player
-        // 0 for all other states
-
-        //is the assumption that a score 
-
-
     }
 
     this.step = function(move){
@@ -137,18 +120,20 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //returns a new game with move applied
             //player is flipped
             //depth is incremented by 1
-        //NOTE: THIS FUNCTION IS TO BE USED WITH MINIMAX. DON'T USE IT TO SWAP PLAYERS IN THE ACTUAL GAME.
+        //function(board, player, depth, lastMove, lastState, playerLtr)
 
-        //shallow copy the board!
+
+        
         var newBoard = this.board.map(function(arr) {
-            return arr.slice();
+            return arr.slice(); //shallow copy the board!
         })
         newBoard[move[0]][move[1]] = this.player;
 
-        var turn = Number(!this.player);
+        var player = Number(!this.player);    //flip the player
 
         var depth = this.depth + 1;
-        return new Game(newBoard, turn, depth, move)
+
+        return new Game(newBoard, player, depth, move, this, this.playerLtr)
     }
 
     this.getPossibleMoves = function() {
@@ -165,92 +150,124 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         return possibleMoves;
     }
 
-    this.minimax = function() {
+    this.findBestOutcome = function() {
         //SECOND ATTEMPT
         //perform a bredth first search of the tree. 
-        //If we hit a desireable outcome, stop! We won't find any better.
+        //return the best winning game state
 
-        var queue = [];
 
-        queue.push(this)
+
+        //THIS STILL TAKES TOO LONG!
+        console.log("looking for best outcome")
+        var t0 = new Date();
+
+        var queue = []; //a queue of Game objects.
+
+
+        queue.push(this)    
 
         while(queue.length > 0){
 
-            var gameState = queue.shift;    // dequeue gameState
+            var gameState = queue.shift();    // dequeue a Game
 
-            //did I win?
-                //break!
-            //else
-                //get possible moves of this game state
-                //for each possible move
-                    //generate game state
-                    //enqueue game state
+            if (gameState.score() > 0){
+                // a winning game for the computer!
+                var t1 = new Date();
+                console.log("Time to complete:")
+                console.log(t1-t0)
+                return gameState;
 
-        }
-
-    }
-
-    this.minimax = function() {
-        //RECURSION HAPPENS HERE
-        //recursivly determines all possible outcomes starting from current state
-        //returns the object structured as {bestScore: move}
-
-        if(this.score() != 0){
-
-            outcome = new Object;
-            outcome[this.score()] = this.lastMove;
-            return outcome;
-
-        } else {
-            //recursion!
-            var outcomes = [];
-            var possibleMoves = this.getPossibleMoves();
-            for (var m=0; m<possibleMoves.length; m++){
-                    var move = possibleMoves[m];
-                    newGame = this.step(move);
-                    outcome = newGame.minimax();
-                    outcomes.push(outcome);
-                }
-        }
-
-        var pickOutcome = function(outcomes) {
-
-            for (o in outcomes){
-                var outcome = outcomes[o];
-                var outcomeScore = Object.keys(outcome)[0] 
-                if ( betterScore( outcomeScore )){
-                    bestScore  = outcomeScore;
-                    bestOutcome = outcome
-                }
-
-            }
-            return bestOutcome;
-        }
-
-        var betterScore = function(outcomeScore){
-            //player 1 wants the highest score
-            //player 2 wants the lowest score
-
-            if (player == 1){
-                return outcomeScore > bestScore;
             } else {
-                return outcomeScore < bestScore;
+                // get all possible children states and enqueue
+                var possibleMoves = this.getPossibleMoves();
+                for (var m=0; m<possibleMoves.length; m++) {
+                    newGame = gameState.step(possibleMoves[m]);
+                    queue.push(newGame);
+                }
+            }
+
+        }
+    }
+
+
+    this.traceBack = function(childGame){
+        // given a decendant game state, traces back to the immediate child.
+        // returns immediate child of this, that leads to childGame
+
+
+        var child = childGame;
+        while(true){
+
+            if(child.parentState === this){
+                // we found the immediate child!    
+                return child.lastMove;
+            } else {
+                child = child.parentState;
             }
         }
-
-        var bestScore = -(11 * this.player); //lower than lowest possible
-
-        return pickOutcome(outcomes);
-
     }
+
+    // this.minimax = function() {
+    //     //RECURSION HAPPENS HERE
+    //     //recursivly determines all possible outcomes starting from current state
+    //     //returns the object structured as {bestScore: move}
+
+    //     if(this.score() != 0){
+
+    //         outcome = new Object;
+    //         outcome[this.score()] = this.lastMove;
+    //         return outcome;
+
+    //     } else {
+    //         //recursion!
+    //         var outcomes = [];
+    //         var possibleMoves = this.getPossibleMoves();
+    //         for (var m=0; m<possibleMoves.length; m++){
+    //                 var move = possibleMoves[m];
+    //                 newGame = this.step(move);
+    //                 outcome = newGame.minimax();
+    //                 outcomes.push(outcome);
+    //             }
+    //     }
+
+    //     var pickOutcome = function(outcomes) {
+
+    //         for (o in outcomes){
+    //             var outcome = outcomes[o];
+    //             var outcomeScore = Object.keys(outcome)[0] 
+    //             if ( betterScore( outcomeScore )){
+    //                 bestScore  = outcomeScore;
+    //                 bestOutcome = outcome
+    //             }
+
+    //         }
+    //         return bestOutcome;
+    //     }
+
+    //     var betterScore = function(outcomeScore){
+    //         //player 1 wants the highest score
+    //         //player 2 wants the lowest score
+
+    //         if (player == 1){
+    //             return outcomeScore > bestScore;
+    //         } else {
+    //             return outcomeScore < bestScore;
+    //         }
+    //     }
+
+    //     var bestScore = -(11 * this.player); //lower than lowest possible
+
+    //     return pickOutcome(outcomes);
+
+    // }
 
     this.compGo = function() {
         //bootstraps the minimax function
         //returns the best possible move.
 
-        var moveChoice = this.minimax();
-        this.move(moveChoice);
-        //call player to go if game isn't over.
+        var bestState = this.findBestOutcome();
+        var bestMove = this.traceBack(bestState);
+        this.move(bestMove);
 
         console.log("handing back to turn controller!")
         this.turnController();
@@ -279,7 +296,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //if the game is over, wrap up
 
         if (this.win()) {
-            console.log("the game is over")
+            console.log("GAME OVER")
             //wrap up the game
         } else if (this.player) {
             //its the computer's turn
@@ -382,7 +399,7 @@ $(document).ready(function(){
         }
 
         var emptyBoard = [
-            [null, 'x', 'o'],
+            [null, null, null],
             [null, null, null],
             [null, null, null]
         ];
@@ -391,16 +408,7 @@ $(document).ready(function(){
         //here is where the game loop begins
 
         console.log("LET'S START THE GAME!")
-
-        console.log("testing first move...")
-        var t0 = new Date();
-
-        console.log(game.minimax());
-
-        t1 = new Date();
-        console.log("Time to run... ");
-        console.log(t1-t0);
-        // game.turnController();
+        game.turnController();
 
     });
 
