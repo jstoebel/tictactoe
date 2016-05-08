@@ -16,7 +16,6 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
     this.parentState = parentState;
     this.playerLtr = playerLtr;
 
-
     //set the player turn in the screen
 
     $("#whosTurn").text("Player turn: "+ this.playerLtr);
@@ -27,89 +26,65 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
         //it is always the opposing player.
 
         var playerToCheck = Number(!this.player)
+        var board = this.board;
 
-        _checkSequences = function(arrs, player){
-            //checks if entire 3 item array is filled with player's value
+        // can we just hard code victory conditions
 
-            for (i in arrs){
-                var arr = arrs[i];
-                var allMatch = arr.every(function(i){
-                    return i == player;
-                });
+        var winStates = [
 
-                if (allMatch){
-                    return true;
-                }
-            }
-            return false;
+            // horizontal wins
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+
+            // vertical wins
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+
+            // diagonal wins
+            [0, 4, 8],
+            [6, 4, 2]
+        ]
+
+        _matchesPlayer = function(index){
+            //is player found at this index?
+
+            var row = Math.floor(index/3);
+            var col = index % 3;
+            return board[row][col] == playerToCheck;
         }
 
-        _checkRows = function(player, board){
-            //any winner in the rows?
+        for(var i=0; i<winStates.length; i++){
+            var state = winStates[i];
 
-            var rows = []
-            for (var i=0; i<3; i++){
-                //are all elements in this row the same?
-
-                var row = board[i];
-                rows.push(row);
+            if(state.every(_matchesPlayer)){
+                return true;
             }
-            return _checkSequences(rows, player);
         }
-
-        _checkColumns = function(player, board){
-            //any winner in the columns?
-
-            var cols = [];
-            for (var c=0; c<3; c++ ){
-                var col = [];
-                for (var r=0; r<3; r++ ){
-                    col.push(board[r][c])
-                }
-                cols.push(col);
-            }
-
-            return _checkSequences(cols, player);
-        };
-
-        _checkPrimeDiagonal = function(player, board) {
-            //any winner in the diagonals?
-
-            var seq = [];
-            for (var i=0; i<3; i++) {
-                seq.push(board[i][i]);
-            }
-
-            return _checkSequences([seq], player)
-        }
-
-        _checkSecondDiagonal = function(player, board) {
-            //any winner in the diagonals?
-
-            var seq = [];
-            for (var i=0; i<3; i++) {
-                seq.push(board[i][2-i])
-            }
-
-            return _checkSequences([seq], player)
-        }
-
-        return (_checkColumns(playerToCheck, board) || _checkRows(playerToCheck, board) || 
-            _checkPrimeDiagonal(playerToCheck, board) || _checkSecondDiagonal(playerToCheck, board))
+        return false;
     }
 
     this.score = function() {
         //returns the score of the current game state
 
+        console.time("score")
+
         if (this.win()){
             if(this.player){
                 //the current player is 1, meaning 0 wins
+                console.timeEnd("score")
+
                 return -10 + this.depth;
             } else {
                 //the current player is 0, meaing 1 wins
+                console.timeEnd("score")
+
                 return 10 - this.depth;
             }
         } else {
+            console.timeEnd("score")
+
             return 0;
         }
     }
@@ -122,7 +97,7 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
             //depth is incremented by 1
         //function(board, player, depth, lastMove, lastState, playerLtr)
 
-
+        console.time("step")
         
         var newBoard = this.board.map(function(arr) {
             return arr.slice(); //shallow copy the board!
@@ -133,12 +108,14 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
 
         var depth = this.depth + 1;
 
+        console.timeEnd("step")
         return new Game(newBoard, player, depth, move, this, this.playerLtr)
     }
 
     this.getPossibleMoves = function() {
         //returns 2d array of all possible moves. examlpe [[0,1], [0, 2]...]
 
+        console.time("getPossibleMoves")
         var possibleMoves = [];
         for (r in this.board){
             for (c in this.board){
@@ -147,6 +124,8 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
                 }
             }
         }
+
+        console.timeEnd("getPossibleMoves")
         return possibleMoves;
     }
 
@@ -156,10 +135,8 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
         //return the best winning game state
 
 
-
         //THIS STILL TAKES TOO LONG!
-        console.log("looking for best outcome")
-        var t0 = new Date();
+        console.time("findBestOutcome");
 
         var queue = []; //a queue of Game objects.
 
@@ -172,13 +149,19 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
 
             if (gameState.score() > 0){
                 // a winning game for the computer!
-                var t1 = new Date();
-                console.log("Time to complete:")
-                console.log(t1-t0)
+                console.timeEnd("findBestOutcome");
                 return gameState;
 
             } else {
                 // get all possible children states and enqueue
+
+                //idea: rather than iterating over the whole board for each step,
+                //lets persist an array of possible moves that parents
+                //pass on to their children
+
+                // if the game is a tie, hold on to it. We may use it as a
+                //consolation
+
                 var possibleMoves = this.getPossibleMoves();
                 for (var m=0; m<possibleMoves.length; m++) {
                     newGame = gameState.step(possibleMoves[m]);
@@ -207,66 +190,14 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
         }
     }
 
-    // this.minimax = function() {
-    //     //RECURSION HAPPENS HERE
-    //     //recursivly determines all possible outcomes starting from current state
-    //     //returns the object structured as {bestScore: move}
-
-    //     if(this.score() != 0){
-
-    //         outcome = new Object;
-    //         outcome[this.score()] = this.lastMove;
-    //         return outcome;
-
-    //     } else {
-    //         //recursion!
-    //         var outcomes = [];
-    //         var possibleMoves = this.getPossibleMoves();
-    //         for (var m=0; m<possibleMoves.length; m++){
-    //                 var move = possibleMoves[m];
-    //                 newGame = this.step(move);
-    //                 outcome = newGame.minimax();
-    //                 outcomes.push(outcome);
-    //             }
-    //     }
-
-    //     var pickOutcome = function(outcomes) {
-
-    //         for (o in outcomes){
-    //             var outcome = outcomes[o];
-    //             var outcomeScore = Object.keys(outcome)[0] 
-    //             if ( betterScore( outcomeScore )){
-    //                 bestScore  = outcomeScore;
-    //                 bestOutcome = outcome
-    //             }
-
-    //         }
-    //         return bestOutcome;
-    //     }
-
-    //     var betterScore = function(outcomeScore){
-    //         //player 1 wants the highest score
-    //         //player 2 wants the lowest score
-
-    //         if (player == 1){
-    //             return outcomeScore > bestScore;
-    //         } else {
-    //             return outcomeScore < bestScore;
-    //         }
-    //     }
-
-    //     var bestScore = -(11 * this.player); //lower than lowest possible
-
-    //     return pickOutcome(outcomes);
-
-    // }
-
     this.compGo = function() {
         //bootstraps the minimax function
         //returns the best possible move.
 
         var bestState = this.findBestOutcome();
         var bestMove = this.traceBack(bestState);
+        console.log("here's the best move");
+        console.log(bestMove);
         this.move(bestMove);
 
         console.log("handing back to turn controller!")
@@ -283,7 +214,8 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
                 var column = match % 3;
                 var moveChoice = [row, column];
                 this.move((moveChoice));
-                console.log("handing back to turn controller!")
+                console.log("done with computer move");
+
                 this.turnController();
             })
         )
@@ -317,7 +249,7 @@ var Game = function(board, player, depth, lastMove, parentState, playerLtr){
         //mv: array of x,y coords, assume they are null.
         //NOTE: this is the method to use for moving in actual game play.
 
-        this.board[mv[0], mv[1]] = this.player;
+        this.board[mv[0]][mv[1]] = this.player;
         this.player = Number(!this.player);
         this.popPage();
     }
@@ -377,10 +309,6 @@ var clickBoard = function(event) {
 
 $(document).ready(function(){
 
-    //pruning: need to do a depth first iteration of the tree. 
-    //If one child yeilds a loss, don't explore its other children
-
-    console.log("doc ready!")
     $('#setupModal').modal('show');
 
     $("#submitBtn").click(function(event) {
@@ -388,8 +316,6 @@ $(document).ready(function(){
     $('#setupModal').modal('hide');        
 
         var dataArr = $("#gameSetupForm").serializeArray();
-
-        console.log(dataArr);
 
         //prep user input
         var data = {}        
@@ -407,7 +333,6 @@ $(document).ready(function(){
         var game = new Game(emptyBoard, data["compFirst"], 0, [null, null], data["xOrO"])
         //here is where the game loop begins
 
-        console.log("LET'S START THE GAME!")
         game.turnController();
 
     });
