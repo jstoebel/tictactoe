@@ -1,14 +1,7 @@
-var Food = function(name) {
+var empty = [1,2,null];
 
-    this.name = name;
-    this.makeQ = function(){
-
-        this.q = [this];
-        this.q.push(Food("eggs"));
-    }
-
+function isEmpty(i){
+    return i === null;
 }
 
-f = new Food("spam")
-f.makeQ()
-console.log(f.q)
+console.log([1,2,null].filter(isEmpty))
