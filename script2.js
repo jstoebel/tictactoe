@@ -19,15 +19,18 @@ var Game = function(board, player, depth, lastMove, ltrKey){
     //this way each game state knows how to get to each of its children
 
     this.win = function(){
-        //determines if the game is in a winning state
-        //we check win state before a turn is taken, therfore if there is a winner,
-        //it is always the opposing player.
+        // determines if current player has won the game
+        // call this method AFTER move has been made.
 
 
     }
 
     this.score = function() {
-        //returns the score of the current game state
+        //returns the score of the current game state.
+        // two in a row of 1: 10 each pts
+        // two in a row of 0: -10 each pts.
+        // 1 wins: 100 pts
+        // 0 wins: -100pts
 
     }
 
@@ -114,13 +117,21 @@ var Game = function(board, player, depth, lastMove, ltrKey){
 
 
     this.project = function(steps) {
-        // builds out possible future states from current state
-        // steps: number of steps to move ahead
+        // looks ahead to find best possible move.
+        // steps: number of steps to look ahead
+            //NOTE: 3 seems to be about the most we can do
 
         console.time("project");
 
         var maxDepth = this.depth + steps;
         var queue = [this];
+
+
+        // while there's something in the queue
+
+            // if we hit a winner, return!
+            // keep track of best move
+            // if we find no winners, return best move.
 
         while(queue.length > 0){
             var curGame = queue.shift(); //grab a gameState
