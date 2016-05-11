@@ -98,19 +98,23 @@ var Game = function(board, player, depth, lastMove, playerLtr){
     this.getPossibleMoves = function() {
         //returns array of all possible moves.
 
-        return this.board.filter(function(i){
-            return i != null;
-        })
+        return this.board.map(function(v, i, arr){
+            if(v===null){
+                return i;
+            }
+        }).filter(function(j){ return j != undefined; })
     }
 
     this.getbestMove = function(depth) {
         //look for the best possible move
 
+
+        //base case condition:
+            //
         if(this.score() != 0 || this.depth == depth){
 
             //setting max depth
             console.log("base case!")
-
             outcome = new Object;
             outcome[this.score()] = this.lastMove;
             return outcome;
@@ -130,8 +134,8 @@ var Game = function(board, player, depth, lastMove, playerLtr){
                 }
         }
 
-        console.log(outcomes);
 
+        //after possible moves have been anaylized to determine their score, determine the best one
         var pickOutcome = function(outcomes) {
 
             for (o in outcomes){
@@ -141,7 +145,6 @@ var Game = function(board, player, depth, lastMove, playerLtr){
                     bestScore  = outcomeScore;
                     bestOutcome = outcome
                 }
-
             }
             return bestOutcome;
         }
@@ -279,15 +282,14 @@ var clickBoard = function(event) {
 
 $(document).ready(function(){
 
-    //pruning: need to do a depth first iteration of the tree. 
-    //If one child yeilds a loss, don't explore its other children
 
     console.log("doc ready!")
-        var emptyBoard = [null, null, null, null, null, null, null, null, null];
+        var emptyBoard = [1, 1, null, null, 1, null, null, null, null];
 
 
         //(board, player, depth, lastMove, playerLtr)
         var game = new Game(emptyBoard, 1, 0, null, 'x')
+        // console.log(game.getPossibleMoves());
         console.log(game.getbestMove(3));
 
 
