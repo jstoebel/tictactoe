@@ -61,14 +61,16 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
     this.score = function() {
         //returns the score of the current game state
+        //remember: if the game was won, it was won by the opposing player
+        //since we check for a win after a move is made and players are swapped 
 
         if (this.win()){
             if(this.player){
                 //the current player is 1, meaning 0 wins
-                return 10 - this.depth;
+                return -10 + this.depth;
             } else {
                 //the current player is 0, meaing 1 wins
-                return -10 + this.depth;
+                return 10 - this.depth;
             }
         } else {
             return 0;
@@ -105,13 +107,13 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         }).filter(function(j){ return j != undefined; })
     }
 
-    this.getbestMove = function(depth) {
+    this.getbestMove = function(maxDepth) {
         //look for the best possible move
 
 
         //base case condition:
             //
-        if(this.score() != 0 || this.depth == depth){
+        if(this.score() != 0 || this.depth == maxDepth){
 
             //setting max depth
             console.log("base case!")
@@ -121,7 +123,6 @@ var Game = function(board, player, depth, lastMove, playerLtr){
             
         } else {
 
-
             console.log("gonna recurse!")
             //recursion!
             var outcomes = [];
@@ -129,7 +130,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
             for (var m=0; m<possibleMoves.length; m++){
                     var move = possibleMoves[m];
                     newGame = this.step(move);
-                    outcome = newGame.getbestMove(depth);
+                    outcome = newGame.getbestMove(maxDepth);
                     outcomes.push(outcome);
                 }
         }
@@ -170,10 +171,9 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //bootstraps the minimax function
         //returns the best possible move.
 
-        var moveChoice = this.minimax();
-        this.move(moveChoice);
-        //call player to go if game isn't over.
+        var moveChoice = this.getbestMove(this.depth + 3);
 
+        this.move(moveChoice);
         console.log("handing back to turn controller!")
         this.turnController();
     }
@@ -201,7 +201,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //if the game is over, wrap up
 
         if (this.win()) {
-            console.log("the game is over")
+            console.log("GAME OVER!")
             //wrap up the game
         } else if (this.player) {
             //its the computer's turn
@@ -219,7 +219,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
     this.move = function(mv) {
         //player's move is added to the board 
         //and player is swapped
-        //mv: array of x,y coords, assume they are null.
+        //mv: index of move to make
         //NOTE: this is the method to use for moving in actual game play.
 
         this.board[mv[0], mv[1]] = this.player;
@@ -237,18 +237,24 @@ var Game = function(board, player, depth, lastMove, playerLtr){
             var coordPrintable = { '1': 'x', '0': 'o' };
         }
 
-        var pageRows = $(".ttt-row");
-        for (var r=0; r<this.board.length; r++){
-            var pageRow = pageRows[r];
-            var cells = $(pageRow).find(".table-cell");
-            for (c=0; c<this.board[r].length; c++){
-                //populate the page cell with the right value
-                var boardValue = this.board[r][c];
-                var cell = cells[c]
-                $(cell).text(coordPrintable[boardValue])
-                // .text(coordPrintable[boardValue]);
-            }
+        for (var i=0; i<this.board.length; i++){
+            var boardValue = this.board[i];
+            var cell = ".cell"+i
+            $(cell).text(coordPrintable[boardValue])
         }
+
+        // var pageRows = $(".ttt-row");
+        // for (var r=0; r<this.board.length; r++){
+        //     var pageRow = pageRows[r];
+        //     var cells = $(pageRow).find(".table-cell");
+        //     for (c=0; c<this.board[r].length; c++){
+        //         //populate the page cell with the right value
+        //         var boardValue = this.board[r][c];
+        //         var cell = cells[c]
+        //         $(cell).text(coordPrintable[boardValue])
+        //         // .text(coordPrintable[boardValue]);
+        //     }
+        // }
     }
 
 }
@@ -284,56 +290,38 @@ $(document).ready(function(){
 
 
     console.log("doc ready!")
-        var emptyBoard = [1, 1, null, null, 1, null, null, null, null];
+
+        //FOR TESTING
+        // var board = [null, null, null, null, null, null, null, null, null];
 
 
-        //(board, player, depth, lastMove, playerLtr)
-        var game = new Game(emptyBoard, 1, 0, null, 'x')
-        // console.log(game.getPossibleMoves());
-        console.log(game.getbestMove(3));
+        //                     //(board, player, depth, lastMove, playerLtr)
+        // var game = new Game(board, 1, 0, null, 'x')
+        // // console.log(game.getPossibleMoves());
+        // console.log(game.getbestMove(3));
 
 
+    $('#setupModal').modal('show');
 
+    $("#submitBtn").click(function(event) {
 
+    $('#setupModal').modal('hide');        
 
-    // $('#setupModal').modal('show');
+        var dataArr = $("#gameSetupForm").serializeArray();
 
-    // $("#submitBtn").click(function(event) {
+        //prep user input
+        var data = {}        
+        for (i in dataArr){
+            var obj = dataArr[i];
+            data[obj["name"]] = obj["value"];
+        }
 
-    // $('#setupModal').modal('hide');        
+        var emptyBoard = [null, null, null, null, null, null, null, null, null];
 
-    //     var dataArr = $("#gameSetupForm").serializeArray();
+        var game = new Game(emptyBoard, data["compFirst"], 0, [null, null], data["xOrO"])
+        //here is where the game loop begins
+        game.turnController();
 
-    //     console.log(dataArr);
-
-    //     //prep user input
-    //     var data = {}        
-    //     for (i in dataArr){
-    //         var obj = dataArr[i];
-    //         data[obj["name"]] = obj["value"];
-    //     }
-
-    //     var emptyBoard = [
-    //         [1,1,1],
-    //         [null, null, null],
-    //         [null, null, null]
-    //     ];
-
-    //     var game = new Game(emptyBoard, data["compFirst"], 0, [null, null], data["xOrO"])
-    //     //here is where the game loop begins
-
-    //     console.log("LET'S START THE GAME!")
-
-    //     console.log("testing first move...")
-    //     var t0 = new Date();
-
-    //     console.log(game.minimax());
-
-    //     t1 = new Date();
-    //     console.log("Time to run... ");
-    //     console.log(t1-t0);
-    //     // game.turnController();
-
-    // });
+    });
 
 })
