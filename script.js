@@ -172,15 +172,15 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //returns the best possible move.
 
         var moveChoice = this.getbestMove(this.depth + 3);
-
-        this.move(moveChoice);
+        var moveIndex = Object.keys(moveChoice)[0]
+        this.move(Number(moveIndex));
         console.log("handing back to turn controller!")
         this.turnController();
     }
 
     this.playerGo = function() {
         //listen for click
-        $("body").click(clickBoard(event).then(
+        $(".board").click(clickBoard(event).then(
             function(match){
                 // call back for when the player picks a spot
 
@@ -190,6 +190,8 @@ var Game = function(board, player, depth, lastMove, playerLtr){
                 this.move((moveChoice));
                 console.log("handing back to turn controller!")
                 this.turnController();
+            }).catch(function(){
+                console.log("something went wrong")
             })
         )
     }
@@ -222,7 +224,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //mv: index of move to make
         //NOTE: this is the method to use for moving in actual game play.
 
-        this.board[mv[0], mv[1]] = this.player;
+        this.board[mv] = this.player;
         this.player = Number(!this.player);
         this.popPage();
     }
@@ -239,7 +241,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
         for (var i=0; i<this.board.length; i++){
             var boardValue = this.board[i];
-            var cell = ".cell"+i
+            var cell = "#cell"+i
             $(cell).text(coordPrintable[boardValue])
         }
 
@@ -261,25 +263,26 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
 var clickBoard = function(event) {
 
+
+    //MAYBE THIS CAN'T BE A PROMISE
     return new Promise(function(resolve, reject){
 
-        try {
-
-            //make sure player isn't cheating and trying to click on an occupied spot!
-            if (!event.target.text() === null ) {
-                throw TypeError;
-            }
- 
-            var cellNum = event.target.id;
-            // var re = /cell(\d)/;
-            var match = cellNum.match(/\d/)[0];
-            // var row = Math.floor(match / 3);
-            // var column = match % 3;
-            resolve(match);
-            
-        } catch (e) {
-            reject();
-        }
+        resolve("worked!");
+        // var clicked = event.target.id;
+        // if(/cell/.test(clicked)) {
+        //     //they clicked an actual cell
+        //     if (!event.target.text() === null ) {
+        //         //player is trying to claim a space already occupied!
+        //         reject();
+        //     } else {
+        //         var cellNum = clicked.match(/\d/)[0];
+        //         resolve(cellNum);
+                 
+        //     }
+        // } else {
+        //     //non cell was clicked
+        //     reject();
+        // }
 
     })
 }
