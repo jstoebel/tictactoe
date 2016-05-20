@@ -13,10 +13,6 @@ var Game = function(board, player, depth, lastMove, playerLtr){
     this.lastMove = lastMove;
     this.playerLtr = playerLtr;
 
-    //set the player turn in the screen
-
-    $("#whosTurn").text("Player turn: "+ this.playerLtr);
-
     this.win = function(){
         //determines if the game is in a winning state
         //we check win state before a turn is taken, therfore if there is a winner,
@@ -194,15 +190,17 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
     }
 
-
     this.turnController = function() {
         //determines who's turn is next and prompts their move.
         //if player is up next, prompt the computer and visa-versa
         //if the game is over, wrap up
 
-        if (this.win()) {
-            console.log("GAME OVER!")
-            //wrap up the game
+        if (this.getPossibleMoves() == 0){
+            console.log("TIE");
+            wrapUp(null);
+        } else if(this.win()) {
+            console.log("WINNER!")
+            wrapUp(Number(!this.player));
         } else if (Number(this.player)) {
             //its the computer's turn
             console.log("handing off to computer")
@@ -212,7 +210,6 @@ var Game = function(board, player, depth, lastMove, playerLtr){
             //its the player's turn
             this.playerGo();
         }
-
 
     }
 
@@ -224,89 +221,71 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
         this.board[mv] = this.player;
         this.player = Number(!this.player);
-        this.popPage();
-    }
+
+        var cell = "#cell"+mv
 
 
-    this.popPage = function() {
-        //page is populated with board.
-
+        //TODO maybe populate the board in this function?
         if (this.playerLtr == 'x'){
             var coordPrintable = { '0':'x' , '1': 'o' };
         } else {
             var coordPrintable = { '1': 'x', '0': 'o' };
         }
 
-        for (var i=0; i<this.board.length; i++){
-            var boardValue = this.board[i];
-            var cell = "#cell"+i
-            $(cell).text(coordPrintable[boardValue])
-        }
-
-        // var pageRows = $(".ttt-row");
-        // for (var r=0; r<this.board.length; r++){
-        //     var pageRow = pageRows[r];
-        //     var cells = $(pageRow).find(".table-cell");
-        //     for (c=0; c<this.board[r].length; c++){
-        //         //populate the page cell with the right value
-        //         var boardValue = this.board[r][c];
-        //         var cell = cells[c]
-        //         $(cell).text(coordPrintable[boardValue])
-        //         // .text(coordPrintable[boardValue]);
-        //     }
-        // }
+        $(cell).text(coordPrintable[boardValue])
     }
 
-}
 
-var clickBoard = function(event) {
+    // this.popPage = function() {
+    //     //page is populated with board.
 
 
-    //MAYBE THIS CAN'T BE A PROMISE
-    return new Promise(function(resolve, reject){
 
-        resolve("worked!");
-        // var clicked = event.target.id;
-        // if(/cell/.test(clicked)) {
-        //     //they clicked an actual cell
-        //     if (!event.target.text() === null ) {
-        //         //player is trying to claim a space already occupied!
-        //         reject();
-        //     } else {
-        //         var cellNum = clicked.match(/\d/)[0];
-        //         resolve(cellNum);
-                 
-        //     }
-        // } else {
-        //     //non cell was clicked
-        //     reject();
-        // }
+    //     for (var i=0; i<this.board.length; i++){
+    //         var boardValue = this.board[i];
+    //         var cell = "#cell"+i
+    //         $(cell).text(coordPrintable[boardValue])
+    //     }
 
-    })
+    // }
+
 }
 
 
+function clearBoard() {
+    $(".table-cell").text("")
 
-$(document).ready(function(){
+}
+
+function wrapUp(compWin) {
+    //wraps up the game, displaying the right winner message
+
+    $("#winner-msg").removeClass("hidden");
+
+    if(compWin == 1) {
+        var msg = "I win!"
+    } else if (compWin === 0) {
+        var msg = "You win!"
+    } else {
+        var msg = "Tie game!"
+    }
+
+    var msg = msg + " Let's play again!"
+
+    $("#winner-msg").text(msg);
+    startGame();
 
 
-    console.log("doc ready!")
+}
 
-        //FOR TESTING
-        // var board = [null, null, null, null, null, null, null, null, null];
-
-
-        //                     //(board, player, depth, lastMove, playerLtr)
-        // var game = new Game(board, 1, 0, null, 'x')
-        // // console.log(game.getPossibleMoves());
-        // console.log(game.getbestMove(3));
-
+function startGame(){
 
     $('#setupModal').modal('show');
 
     $("#submitBtn").click(function(event) {
 
     $('#setupModal').modal('hide');        
+        clearBoard();
 
         var dataArr = $("#gameSetupForm").serializeArray();
 
@@ -323,6 +302,10 @@ $(document).ready(function(){
         //here is where the game loop begins
         game.turnController();
 
-    });
+    });    
+}
 
+$(document).ready(function(){
+
+    startGame();
 })
