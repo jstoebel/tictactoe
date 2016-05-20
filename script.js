@@ -172,7 +172,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //returns the best possible move.
 
         var moveChoice = this.getbestMove(this.depth + 3);
-        var moveIndex = Object.keys(moveChoice)[0]
+        var moveIndex = moveChoice[Object.keys(moveChoice)[0]]; 
         this.move(Number(moveIndex));
         console.log("handing back to turn controller!")
         this.turnController();
@@ -180,20 +180,18 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
     this.playerGo = function() {
         //listen for click
-        $(".board").click(clickBoard(event).then(
-            function(match){
-                // call back for when the player picks a spot
+        var game = this;
+        $(".empty-cell").on("click", function(event){
+            var clicked = event.target.id;
+            var cellNum = clicked.match(/\d/)[0];
+            game.move(Number(cellNum));
 
-                var row = Math.floor(match / 3);
-                var column = match % 3;
-                var moveChoice = [row, column];
-                this.move((moveChoice));
-                console.log("handing back to turn controller!")
-                this.turnController();
-            }).catch(function(){
-                console.log("something went wrong")
-            })
-        )
+            $(".cell"+cellNum).removeClass(".empty-cell")
+            $(".empty-cell").off("click")
+            console.log("handing back to turn controller!")
+            game.turnController();            
+        })
+
     }
 
 
@@ -205,7 +203,7 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         if (this.win()) {
             console.log("GAME OVER!")
             //wrap up the game
-        } else if (this.player) {
+        } else if (Number(this.player)) {
             //its the computer's turn
             console.log("handing off to computer")
             this.compGo()
@@ -321,7 +319,7 @@ $(document).ready(function(){
 
         var emptyBoard = [null, null, null, null, null, null, null, null, null];
 
-        var game = new Game(emptyBoard, data["compFirst"], 0, [null, null], data["xOrO"])
+        var game = new Game(emptyBoard, Number(data["compFirst"]), 0, [null, null], data["xOrO"])
         //here is where the game loop begins
         game.turnController();
 
