@@ -168,6 +168,8 @@ var Game = function(board, player, depth, lastMove, playerLtr){
         //returns the best possible move.
 
         var moveChoice = this.getbestMove(this.depth + 3);
+        console.log(moveChoice);
+
         var moveIndex = moveChoice[Object.keys(moveChoice)[0]]; 
         this.move(Number(moveIndex));
         console.log("handing back to turn controller!")
@@ -227,27 +229,15 @@ var Game = function(board, player, depth, lastMove, playerLtr){
 
         //TODO maybe populate the board in this function?
         if (this.playerLtr == 'x'){
-            var coordPrintable = { '0':'x' , '1': 'o' };
+            var coordPrintable = { 0:'x' , 1: 'o' };
         } else {
-            var coordPrintable = { '1': 'x', '0': 'o' };
+            var coordPrintable = { 0: 'o' , 1: 'x' };
         }
 
-        $(cell).text(coordPrintable[boardValue])
+        $(cell).text(coordPrintable[this.player])
+
+        console.log(this.board)
     }
-
-
-    // this.popPage = function() {
-    //     //page is populated with board.
-
-
-
-    //     for (var i=0; i<this.board.length; i++){
-    //         var boardValue = this.board[i];
-    //         var cell = "#cell"+i
-    //         $(cell).text(coordPrintable[boardValue])
-    //     }
-
-    // }
 
 }
 
